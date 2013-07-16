@@ -1,4 +1,3 @@
-as3-paper
-=========
+#AS3 Paper#
 
-Simplest 2D sprite engine based on Stage3D
+Stage3D based simplest 2D engine

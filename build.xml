@@ -1,0 +1,40 @@
+<project name="as3-paper" basedir="." default="build">
+
+    <taskdef resource="flexTasks.tasks" classpath="${FLEX_HOME}/ant/lib/flexTasks.jar"/>
+
+    <property name="build" location="${basedir}/build"/>
+    <property name="sources" location="${basedir}/src"/>
+    <property name="libs" location="${basedir}/lib"/>
+
+    <target name="build" depends="install-dependencies, clear, compile">
+    </target>
+
+    <target name="install-dependencies" depends="clear">
+        <install-library name="as3-agal-asm"/>
+    </target>
+
+    <target name="compile" depends="clear">
+        <compc output="${build}/${ant.project.name}.swc">
+            <debug>false</debug>
+            <source-path path-element="${sources}"/>
+            <include-sources dir="${sources}" includes="*"/>
+            <include-libraries dir="${libs}" append="true" includes="*"/>
+        </compc>
+    </target>
+
+    <target name="clear">
+        <delete dir="${build}" failonerror="false"/>
+        <mkdir dir="${build}"/>
+    </target>
+
+    <macrodef name="install-library">
+        <attribute name="name"/>
+        <sequential>
+            <get src="https://github.com/flashgate/@{name}/archive/master.zip" dest="${build}/@{name}.zip"/>
+            <unzip src="${build}/@{name}.zip" dest="${build}"/>
+            <ant dir="${build}/@{name}-master" inheritAll="false"/>
+            <copy file="${build}/@{name}-master/build/@{name}.swc" todir="lib"/>
+        </sequential>
+    </macrodef>
+
+</project>
