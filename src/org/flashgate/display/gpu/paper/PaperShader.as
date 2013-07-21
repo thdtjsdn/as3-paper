@@ -16,7 +16,7 @@ public class PaperShader extends GpuAssembler implements IPaperComponent {
             _context = context;
         }
         if (context) {
-            _program || initProgram();
+            _program || (_program = initProgram(context));
             context.setProgram(_program);
         }
     }
@@ -35,12 +35,13 @@ public class PaperShader extends GpuAssembler implements IPaperComponent {
         tex(oc, v, fs, LINEAR);
     }
 
-    private function initProgram():void {
-        _program = _context.createProgram();
-        _program.upload(vertexProgram, fragmentProgram);
+    protected function initProgram(context:Context3D):Program3D {
+        var result:Program3D = context.createProgram();
+        result.upload(vertexProgram, fragmentProgram);
+        return result;
     }
 
-    private function disposeProgram():void {
+    protected function disposeProgram():void {
         _program.dispose();
         _program = null;
     }
