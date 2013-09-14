@@ -11,14 +11,16 @@ public class PaperView {
 
     private const MIN_SIZE:int = 50;
 
+    private const UPDATE_CONTEXT:int = 1;
+    private const UPDATE_BUFFER:int = 2;
+
     private var _stage:Stage3D;
-    private var _items:Vector.<IPaperComponent> = new Vector.<IPaperComponent>();
+    private var _items:Vector.<IPaperRendererComponent> = new Vector.<IPaperRendererComponent>();
 
-    private var _width:int = MIN_SIZE;
-    private var _height:int = MIN_SIZE;
+    private var _width:int = 320;
+    private var _height:int = 240;
 
-    private var _updateContext:Boolean;
-    private var _updateSize:Boolean = true;
+    protected var _update:int;
 
     public function PaperView(stage:Stage3D) {
         _stage = stage;
@@ -44,35 +46,39 @@ public class PaperView {
         if (_width != width || _height != height) {
             _width = width;
             _height = height;
-            _updateSize = true;
+            invalidateBackBuffer();
         }
     }
 
-    public function addComponent(item:IPaperComponent):void {
+    public function addComponent(item:IPaperRendererComponent):void {
         item && _items.push(item);
     }
 
-    public function removeComponent(item:IPaperComponent):void {
+    public function removeComponent(item:IPaperRendererComponent):void {
         var index:int = _items.indexOf(item);
         index == -1 || _items.splice(index, 1);
     }
 
     public function render():void {
         var context:Context3D = _stage ? _stage.context3D : null;
+
         if (context) {
-            if (_updateContext) {
-                _updateContext = false;
-                updateContext(context);
-            }
-            if (_updateSize) {
-                _updateSize = false;
-                updateSize(context);
-            }
+            _update && update(context);
             context.clear();
-            for each(var item:IPaperComponent in _items) {
-                item.upload(context);
-            }
+            upload(context);
             context.present();
+        }
+    }
+
+    protected function update(context:Context3D):void {
+        _update & UPDATE_CONTEXT && updateContext(context);
+        _update & UPDATE_BUFFER && updateBackBuffer(context);
+        _update = 0;
+    }
+
+    protected function upload(context:Context3D):void {
+        for each(var item:IPaperRendererComponent in _items) {
+            item.upload(context);
         }
     }
 
@@ -107,27 +113,32 @@ public class PaperView {
         return "constrained";
     }
 
-    private function onContext(event:Event):void {
-        _updateContext = true;
-        _updateSize = true;
+    protected function invalidateContext():void {
+        _update |= UPDATE_CONTEXT;
+    }
+
+    protected function invalidateBackBuffer():void {
+        _update |= UPDATE_BUFFER;
     }
 
     protected function updateContext(context:Context3D):void {
+        context.enableErrorChecking = true;
         context.setDepthTest(false, Context3DCompareMode.ALWAYS);
         context.setCulling(Context3DTriangleFace.NONE);
-        context.setBlendFactors(Context3DBlendFactor.ONE, Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA);
+        context.setBlendFactors(Context3DBlendFactor.SOURCE_ALPHA, Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA);
         context.setRenderToBackBuffer();
 
-        updateShader(context);
+        new PaperShader().upload(context);
     }
 
-    protected function updateSize(context:Context3D):void {
-        context.configureBackBuffer(_width, _height, 0);
+    protected function updateBackBuffer(context:Context3D):void {
+        context.configureBackBuffer(_width, _height, 0, false);
         context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 0, new <Number>[_width / 2, _height / 2, 1, 1]);
     }
 
-    protected function updateShader(context:Context3D):void {
-        new PaperShader().upload(context);
+    private function onContext(event:Event):void {
+        invalidateContext();
+        invalidateBackBuffer();
     }
 
 }
