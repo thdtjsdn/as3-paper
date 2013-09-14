@@ -24,8 +24,8 @@ public class PaperSprite extends PaperSpriteContainer {
 
     // Internal
     private var _parent:PaperSpriteContainer;
+    private var _layer:PaperSpriteLayer;
 
-    internal var layer:PaperSpriteLayer;
     internal var vertex:int = -1;
     internal var index:int = -1;
 
@@ -73,6 +73,11 @@ public class PaperSprite extends PaperSpriteContainer {
     [Inline]
     final public function get parent():PaperSpriteContainer {
         return _parent;
+    }
+
+    [Inline]
+    final public function get layer():PaperSpriteLayer {
+        return _layer;
     }
 
     [Inline]
@@ -158,6 +163,9 @@ public class PaperSprite extends PaperSpriteContainer {
         }
     }
 
+    /**
+     * It is recommended to use visibility for Sprite reusing
+     */
     [Inline]
     final public function get visible():Boolean {
         return _visible;
@@ -167,7 +175,7 @@ public class PaperSprite extends PaperSpriteContainer {
     final public function set visible(value:Boolean):void {
         if (_visible != value) {
             _visible = value;
-            layer && layer.invalidateSorting();
+            _layer && _layer.invalidateIndex();
         }
     }
 
@@ -263,44 +271,41 @@ public class PaperSprite extends PaperSpriteContainer {
 
     override public function dispose():void {
         super.dispose();
-        layer && layer.detachSprite(vertex);
+        _layer && _layer.detachSprite(this);
     }
 
-    // protected ---------------------------
-
     [Inline]
-    final protected function invalidatePosition():void {
+    final internal function invalidatePosition():void {
         _update |= UPDATE_POSITION;
     }
 
     [Inline]
-    final protected function invalidateGlobalMatrix():void {
+    final internal function invalidateGlobalMatrix():void {
         _update |= UPDATE_GLOBAL_MATRIX;
     }
 
     [Inline]
-    final protected function invalidateMatrix():void {
+    final internal function invalidateMatrix():void {
         _update |= UPDATE_MATRIX;
     }
 
     [Inline]
-    final protected function invalidateAlpha():void {
+    final internal function invalidateAlpha():void {
         _update |= UPDATE_ALPHA;
     }
 
     [Inline]
-    final protected function invalidateSize():void {
+    final internal function invalidateSize():void {
         _update |= UPDATE_SIZE;
     }
 
     [Inline]
-    final protected function invalidateTexture():void {
+    final internal function invalidateTexture():void {
         _update |= UPDATE_TEXTURE;
     }
 
-    // internal ---------------------------
-
-    internal function setParent(parent:PaperSpriteContainer):void {
+    [Inline]
+    final internal function setParent(parent:PaperSpriteContainer):void {
         if (_parent != parent) {
             _parent && _parent.detachChild(this);
             _parent = parent;
@@ -308,7 +313,17 @@ public class PaperSprite extends PaperSpriteContainer {
         }
     }
 
-    internal function updateLocalMatrix():void {
+    [Inline]
+    final internal function setLayer(layer:PaperSpriteLayer):void {
+        if (_layer != layer) {
+            _layer && _layer.detachSprite(this);
+            _layer = layer;
+            _layer && _layer.attachSprite(this);
+        }
+    }
+
+    [Inline]
+    final internal function updateLocalMatrix():void {
         _local.a = _sx * _rx;
         _local.b = _sx * _ry;
         _local.c = -_sy * _ry;
@@ -316,15 +331,10 @@ public class PaperSprite extends PaperSpriteContainer {
         invalidateGlobalMatrix();
     }
 
-    internal function updateGlobalMatrix():void {
-        var sprite:PaperSprite = _parent as PaperSprite;
-        _global = sprite ? sprite.matrix.transform(_local, _global) : null;
-
-        if (items) {
-            for each(sprite in items) {
-                sprite.invalidateGlobalMatrix();
-            }
-        }
+    [Inline]
+    final internal function updateGlobalMatrix():void {
+        _global = (_parent is PaperSprite) ? (_parent as PaperSprite).matrix.transform(_local, _global) : null;
+        items && updateChilrenMatrix();
         invalidatePosition();
     }
 

@@ -6,7 +6,7 @@ import flash.display3D.Context3D;
 import flash.display3D.Context3DTextureFormat;
 import flash.display3D.textures.Texture;
 
-public class PaperTextureAtlas implements IPaperRendererComponent {
+public class PaperTextureAtlas implements IPaperComponent {
     private var _bitmap:BitmapData;
     private var _context:Context3D;
     private var _texture:Texture;

@@ -1,45 +1,34 @@
 package org.flashgate.display.gpu.paper.sprite {
-import org.flashgate.display.gpu.paper.*;
-
-import flash.display.IBitmapDrawable;
 import flash.display3D.Context3D;
 import flash.display3D.Context3DVertexBufferFormat;
 
-public class PaperSpriteLayer extends PaperSpriteContainer implements IPaperRendererComponent {
+import org.flashgate.display.gpu.paper.*;
 
-    private static const MAX_SIZE:int = 16383;
+public class PaperSpriteLayer extends PaperSpriteContainer implements IPaperComponent {
 
-    private var _indexBuffer:PaperSpriteIndexBuffer;
-    private var _positionBuffer:PaperSpriteVertexBuffer;
-    private var _texureBuffer:PaperSpriteVertexBuffer;
-    private var _alphaBuffer:PaperSpriteVertexBuffer;
+    MAX_SPRITES
+
+    private var _indexBuffer:PaperSpriteIndexBuffer = new PaperSpriteIndexBuffer();
+    private var _positionBuffer:PaperSpriteVertexBuffer = new PaperSpritePositionBuffer(0);
+    private var _texureBuffer:PaperSpriteVertexBuffer = new PaperSpriteTextureBuffer(1);
+    private var _alphaBuffer:PaperSpriteAlphaBuffer = new PaperSpriteAlphaBuffer(2);
+
+    private var _stack:Vector.<PaperSpriteContainer> = new Vector.<PaperSpriteContainer>();
+    private var _iterators:Vector.<int> = new Vector.<int>();
+    private var _containers:Vector.<PaperSpriteContainer> = new Vector.<PaperSpriteContainer>();
 
     private var _released:Vector.<int> = new Vector.<int>();
     private var _allocate:int;
     private var _length:int;
 
-    public function PaperSpriteLayer() {
-        super();
-        _indexBuffer = new PaperSpriteIndexBuffer(this);
-        _positionBuffer = new PaperSpriteVertexBuffer(0, Context3DVertexBufferFormat.FLOAT_2);
-        _texureBuffer = new PaperSpriteVertexBuffer(1, Context3DVertexBufferFormat.FLOAT_2);
-        _alphaBuffer = new PaperSpriteVertexBuffer(2, Context3DVertexBufferFormat.FLOAT_1);
-    }
+    private var _updateIndex:Boolean;
 
-    [Inline]
-    final protected function get length():int {
+    protected function get length():int {
         return _length;
     }
 
     protected function set length(value:int):void {
-        if (value < 0) {
-            value = 0;
-        } else if (value > MAX_SIZE) {
-            value = MAX_SIZE;
-        }
         if (_length != value) {
-            _length = value;
-            _indexBuffer.length = _length;
             _positionBuffer.length = _length;
             _texureBuffer.length = _length;
             _alphaBuffer.length = _length;
@@ -47,6 +36,10 @@ public class PaperSpriteLayer extends PaperSpriteContainer implements IPaperRend
     }
 
     public function upload(context:Context3D):void {
+        if (_updateIndex) {
+            _updateIndex = false;
+            updateIndex();
+        }
         uploadIndexBuffers(context);
         uploadVertexBuffers(context);
         draw();
@@ -75,20 +68,92 @@ public class PaperSpriteLayer extends PaperSpriteContainer implements IPaperRend
         _alphaBuffer.dispose();
     }
 
+    // protected
+
+    protected function updateIndex():void {
+        var stack:Vector.<PaperSpriteContainer> = _stack;
+        var containers:Vector.<PaperSpriteContainer> = _containers;
+        var iterators:Vector.<int> = _iterators;
+        var buffer:PaperSpriteIndexBuffer = _indexBuffer;
+        var index:int = 0;
+        var level:int = 0;
+
+        stack[level] = this;
+        iterators[level] = 0;
+        containers.length = 0;
+        buffer.select();
+
+        loop: while (level >= 0) {
+            var i:int = iterators[level];
+            var container:PaperSpriteContainer = stack[level];
+            var items:Vector.<PaperSprite> = container.items;
+
+            if (items) {
+                var count:int = items.length;
+                containers.push(container);
+                while (i < count) {
+                    var sprite:PaperSprite = items[i];
+
+                    if (sprite && sprite.visible) {
+                        if (sprite.layer != this) {
+                            sprite.setLayer(this);
+                        }
+                        if (sprite.vertex < 0) {
+                            break;
+                        }
+                        if (sprite.index != index) {
+                            sprite.index = index;
+                            buffer.writeSprite(sprite.vertex, index);
+                        }
+                        if (++index > buffer.length) {
+                            buffer.length <<= 1;
+                            if (index > buffer.length) {
+                                break loop;
+                            }
+                        }
+                        if (sprite.numChildren) {
+                            iterators[level++] = index;
+                            stack[level] = sprite;
+                            iterators[level] = 0;
+                            break;
+                        }
+                    }
+                }
+                if (i == count) {
+                    level--;
+                }
+            }
+        }
+
+        buffer.deselect();
+        stack.length = 1;
+        iterators.length = 1;
+    }
+
     // internal
 
     [Inline]
-    final internal function invalidateSorting():void {
-        _indexBuffer.invalidateSorting();
+    final internal function invalidateIndex():void {
+        _updateIndex = true;
     }
 
-    internal function attachSprite():int {
+    override internal function attachChild(child:PaperSprite):void {
+        invalidateIndex();
+    }
+
+    override internal function detachChild(child:PaperSprite):void {
+        super.detachChild(child);
+        invalidateIndex();
+    }
+
+
+    internal function attachSprite(sprite:PaperSprite):int {
         if (_released.length) {
-            return _released.pop();
+            sprite.vertex < _released.pop();
         } else {
-            if (_allocate < length) {
+            if (_allocate < _length) {
                 return _allocate++;
-            } else if (length < MAX_SIZE) {
+            } else if (_length < MAX_SPRITES) {
                 length <<= 1;
                 return _allocate++;
             }
@@ -96,10 +161,10 @@ public class PaperSpriteLayer extends PaperSpriteContainer implements IPaperRend
         return -1;
     }
 
-    internal function detachSprite(vertex:int):void {
-        if (vertex >= 0) {
-            _released.push(vertex);
-            invalidateSorting();
+    internal function detachSprite(sprite:PaperSprite):void {
+        if (sprite.vertex >= 0) {
+            _released.push(sprite.vertex);
+            invalidateIndex();
         }
     }
 

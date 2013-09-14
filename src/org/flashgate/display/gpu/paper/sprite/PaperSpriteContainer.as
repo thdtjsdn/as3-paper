@@ -12,46 +12,46 @@ public class PaperSpriteContainer {
         return items ? items[index] : null;
     }
 
-    public function getChildIndex(item:PaperSprite):int {
-        return items ? items.indexOf(item) : -1;
+    public function getChildIndex(child:PaperSprite):int {
+        return items ? items.indexOf(child) : -1;
     }
 
-    public function addChild(item:PaperSprite):PaperSprite {
-        if (item && item.parent != this) {
+    public function addChild(child:PaperSprite):PaperSprite {
+        if (child && child.parent != this) {
             if (items) {
-                items.push(item);
+                items.push(child);
             } else {
-                items = new <PaperSprite>[item];
+                items = new <PaperSprite>[child];
             }
-            item.setParent(this);
-            return item;
+            child.setParent(this);
+            return child;
         }
         return null;
     }
 
-    public function addChildAt(item:PaperSprite, index:int):PaperSprite {
-        if (item && item.parent != this) {
+    public function addChildAt(child:PaperSprite, index:int):PaperSprite {
+        if (child && child.parent != this) {
             if (items) {
                 if (index <= 0) {
-                    items.unshift(item);
+                    items.unshift(child);
                 } else if (index >= items.length) {
-                    items.push(item);
+                    items.push(child);
                 } else {
-                    items.splice(index, 0, item);
+                    items.splice(index, 0, child);
                 }
             } else {
-                items = new <PaperSprite>[item];
+                items = new <PaperSprite>[child];
             }
-            item.setParent(this);
-            return item;
+            child.setParent(this);
+            return child;
         }
         return null;
     }
 
-    public function removeChild(item:PaperSprite):PaperSprite {
-        if (item && item.parent == this) {
-            item.setParent(null);
-            return item;
+    public function removeChild(child:PaperSprite):PaperSprite {
+        if (child && child.parent == this) {
+            child.setParent(null);
+            return child;
         }
         return null;
     }
@@ -64,18 +64,24 @@ public class PaperSpriteContainer {
         if (items) {
             var list:Vector.<PaperSprite> = items;
             items = null;
-            for each(var sprite:PaperSprite in list) {
-                sprite.dispose();
+            for each(var child:PaperSprite in list) {
+                child.dispose();
             }
         }
     }
 
     // internal
 
-    internal function attachChild(item:PaperSprite):void {
+    internal function updateChilrenMatrix():void {
+        for each(var child:PaperSprite in items) {
+            child.invalidateGlobalMatrix();
+        }
     }
 
-    internal function detachChild(item:PaperSprite):void {
+    internal function attachChild(child:PaperSprite):void {
+    }
+
+    internal function detachChild(child:PaperSprite):void {
         if (items) {
             var index:int = items.indexOf(item);
             index == -1 || items.splice(index, 1);

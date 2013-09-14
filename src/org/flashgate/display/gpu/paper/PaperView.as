@@ -15,7 +15,7 @@ public class PaperView {
     private const UPDATE_BUFFER:int = 2;
 
     private var _stage:Stage3D;
-    private var _items:Vector.<IPaperRendererComponent> = new Vector.<IPaperRendererComponent>();
+    private var _items:Vector.<IPaperComponent> = new Vector.<IPaperComponent>();
 
     private var _width:int = 320;
     private var _height:int = 240;
@@ -50,11 +50,11 @@ public class PaperView {
         }
     }
 
-    public function addComponent(item:IPaperRendererComponent):void {
+    public function addComponent(item:IPaperComponent):void {
         item && _items.push(item);
     }
 
-    public function removeComponent(item:IPaperRendererComponent):void {
+    public function removeComponent(item:IPaperComponent):void {
         var index:int = _items.indexOf(item);
         index == -1 || _items.splice(index, 1);
     }
@@ -77,7 +77,7 @@ public class PaperView {
     }
 
     protected function upload(context:Context3D):void {
-        for each(var item:IPaperRendererComponent in _items) {
+        for each(var item:IPaperComponent in _items) {
             item.upload(context);
         }
     }
