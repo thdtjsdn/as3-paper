@@ -83,7 +83,7 @@ public class PaperSpriteContainer {
 
     internal function detachChild(child:PaperSprite):void {
         if (items) {
-            var index:int = items.indexOf(item);
+            var index:int = items.indexOf(child);
             index == -1 || items.splice(index, 1);
         }
     }

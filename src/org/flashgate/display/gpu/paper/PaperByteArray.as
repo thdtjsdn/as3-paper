@@ -14,24 +14,25 @@ public class PaperByteArray {
     public function PaperByteArray() {
         _data.length = MIN_SIZE;
         _data.endian = Endian.LITTLE_ENDIAN;
-    }
-
-    public function select():void {
         _domain = ApplicationDomain.currentDomain;
-        _previous = _domain.domainMemory;
-        _domain.domainMemory = _data;
-    }
-
-    public function deselect():void {
-        if (_domain) {
-            _domain.domainMemory = _previous;
-            _previous = null;
-            _domain = null;
-        }
     }
 
     public function get data():ByteArray {
         return _data;
+    }
+
+    public function select():void {
+        if (_domain.domainMemory != _data) {
+            _previous = _domain.domainMemory;
+            _domain.domainMemory = _data;
+        }
+    }
+
+    public function deselect():void {
+        if (_domain.domainMemory == _data) {
+            _domain.domainMemory = _previous;
+            _previous = null;
+        }
     }
 
     public function get length():int {

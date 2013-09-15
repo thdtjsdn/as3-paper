@@ -3,23 +3,26 @@ import flash.display3D.Context3D;
 import flash.display3D.Context3DVertexBufferFormat;
 import flash.display3D.VertexBuffer3D;
 
-import org.flashgate.display.gpu.paper.PaperByteArray;
-
 public class PaperSpriteVertexBuffer {
 
     private var _context:Context3D;
     private var _buffer:VertexBuffer3D;
 
-    private var _format:String;
+    private var _layer:PaperSpriteLayer;
     private var _index:int;
+    private var _format:String;
+
     private var _size:int;
     private var _length:int;
 
-    private var _bytes:PaperByteArray = new PaperByteArray();
-
-    public function PaperSpriteVertexBuffer(index:int, format:String) {
+    public function PaperSpriteVertexBuffer(layer:PaperSpriteLayer, index:int, format:String) {
+        _layer = layer;
         _index = index;
         _size = getSizeByFormat(_format = format);
+    }
+
+    public function get layer():PaperSpriteLayer {
+        return _layer;
     }
 
     public function get index():int {
@@ -41,16 +44,8 @@ public class PaperSpriteVertexBuffer {
     public function set length(value:int):void {
         if (_length != value) {
             _length = value;
-            _buffer && disposeBuffer();
+            resizeBuffer();
         }
-    }
-
-    public function select():void {
-        _bytes.select();
-    }
-
-    public function deselect():void {
-        _bytes.deselect();
     }
 
     public function upload(context:Context3D):void {
@@ -58,22 +53,31 @@ public class PaperSpriteVertexBuffer {
             _context = context;
             _buffer && disposeBuffer();
         }
-        if (context && _length) {
-            uploadBuffer(_buffer || (_buffer = createBuffer(context)));
+        if (_context && _length) {
+            if (_buffer) {
+                uploadBuffer(_buffer, false);
+            } else {
+                uploadBuffer(_buffer = createBuffer(context), true);
+            }
         }
     }
 
     public function dispose():void {
         _buffer && disposeBuffer();
+        _context = null;
     }
 
     // protected
+
+    protected function resizeBuffer():void {
+        _buffer && disposeBuffer();
+    }
 
     protected function createBuffer(context:Context3D):VertexBuffer3D {
         return context.createVertexBuffer(_length << 2, _size);
     }
 
-    protected function uploadBuffer(buffer:VertexBuffer3D):void {
+    protected function uploadBuffer(buffer:VertexBuffer3D, init:Boolean):void {
         _context.setVertexBufferAt(_index, buffer, 0, _format);
     }
 

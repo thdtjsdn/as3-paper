@@ -1,4 +1,5 @@
 package org.flashgate.display.gpu.paper {
+import flash.display.BitmapData;
 import flash.display.Stage3D;
 import flash.display3D.Context3D;
 import flash.display3D.Context3DBlendFactor;
@@ -6,6 +7,8 @@ import flash.display3D.Context3DCompareMode;
 import flash.display3D.Context3DProgramType;
 import flash.display3D.Context3DTriangleFace;
 import flash.events.Event;
+
+import org.flashgate.display.gpu.paper.texture.PaperTextureAtlas;
 
 public class PaperView {
 

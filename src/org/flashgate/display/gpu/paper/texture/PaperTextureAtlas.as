@@ -17,12 +17,11 @@ public class PaperTextureAtlas implements IPaperComponent {
 
     public function upload(context:Context3D):void {
         if (_context != context) {
-            _texture && disposeTexture();
             _context = context;
+            _texture && disposeTexture();
         }
-        if (context) {
-            _texture || (_texture = initTexture(context));
-            _context.setTextureAt(0, _texture);
+        if (_context) {
+            uploadTexture(_texture || (_texture = createTexture(context)));
         }
     }
 
@@ -31,19 +30,24 @@ public class PaperTextureAtlas implements IPaperComponent {
         _context = null;
     }
 
-    protected function initBitmap():BitmapData {
+    protected function createBitmap():BitmapData {
         return _bitmap;
     }
 
-    protected function releaseBitmap(bitmap:BitmapData):void {
+    protected function disposeBitmap(bitmap:BitmapData):void {
     }
 
-    protected function initTexture(context:Context3D):Texture {
-        var bitmap:BitmapData = initBitmap();
+    protected function createTexture(context:Context3D):Texture {
+        var bitmap:BitmapData = createBitmap();
         var result:Texture = context.createTexture(bitmap.width, bitmap.height, Context3DTextureFormat.BGRA, false);
         result.uploadFromBitmapData(bitmap);
-        releaseBitmap(bitmap);
+        disposeBitmap(bitmap);
         return result;
+    }
+
+    protected function uploadTexture(texture:Texture):void {
+        trace("upload texture at 0");
+        _context.setTextureAt(0, texture);
     }
 
     protected function disposeTexture():void {

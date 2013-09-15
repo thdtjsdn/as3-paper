@@ -24,10 +24,11 @@ public class PaperSprite extends PaperSpriteContainer {
 
     // Internal
     private var _parent:PaperSpriteContainer;
-    private var _layer:PaperSpriteLayer;
+    internal var layer:PaperSpriteLayer;
 
     internal var vertex:int = -1;
     internal var index:int = -1;
+    internal var update:int;
 
     // Local transformation matrix
     private var _local:PaperMatrix = new PaperMatrix();
@@ -43,8 +44,8 @@ public class PaperSprite extends PaperSpriteContainer {
     private var _rx:Number = 1;
 
     // Size
-    private var _width:Number = 0;
-    private var _height:Number = 0;
+    private var _width:Number = 32;
+    private var _height:Number = 32;
 
     // Texture
     private var _texture:PaperSpriteTexture = DEFAULT_TEXTURE;
@@ -54,9 +55,6 @@ public class PaperSprite extends PaperSpriteContainer {
     // Transformation point
     private var _tx:Number = 0.5;
     private var _ty:Number = 0.5;
-
-    // Flags
-    private var _update:int;
 
     public function PaperSprite() {
         super();
@@ -73,11 +71,6 @@ public class PaperSprite extends PaperSpriteContainer {
     [Inline]
     final public function get parent():PaperSpriteContainer {
         return _parent;
-    }
-
-    [Inline]
-    final public function get layer():PaperSpriteLayer {
-        return _layer;
     }
 
     [Inline]
@@ -157,6 +150,13 @@ public class PaperSprite extends PaperSpriteContainer {
 
     [Inline]
     final public function set alpha(value:Number):void {
+        if (value < 0) {
+            value = 0;
+        } else if (value > 1) {
+            value = 1;
+        } else {
+            value = int(value * 100) / 100;
+        }
         if (_alpha != value) {
             _alpha = value;
             invalidateAlpha();
@@ -175,7 +175,7 @@ public class PaperSprite extends PaperSpriteContainer {
     final public function set visible(value:Boolean):void {
         if (_visible != value) {
             _visible = value;
-            _layer && _layer.invalidateIndex();
+            layer && layer.invalidateIndex();
         }
     }
 
@@ -271,37 +271,37 @@ public class PaperSprite extends PaperSpriteContainer {
 
     override public function dispose():void {
         super.dispose();
-        _layer && _layer.detachSprite(this);
+        layer && layer.detachSprite(this);
     }
 
     [Inline]
     final internal function invalidatePosition():void {
-        _update |= UPDATE_POSITION;
+        update |= UPDATE_POSITION;
     }
 
     [Inline]
     final internal function invalidateGlobalMatrix():void {
-        _update |= UPDATE_GLOBAL_MATRIX;
+        update |= UPDATE_GLOBAL_MATRIX;
     }
 
     [Inline]
     final internal function invalidateMatrix():void {
-        _update |= UPDATE_MATRIX;
+        update |= UPDATE_MATRIX;
     }
 
     [Inline]
     final internal function invalidateAlpha():void {
-        _update |= UPDATE_ALPHA;
+        update |= UPDATE_ALPHA;
     }
 
     [Inline]
     final internal function invalidateSize():void {
-        _update |= UPDATE_SIZE;
+        update |= UPDATE_SIZE;
     }
 
     [Inline]
     final internal function invalidateTexture():void {
-        _update |= UPDATE_TEXTURE;
+        update |= UPDATE_TEXTURE;
     }
 
     [Inline]
@@ -310,15 +310,6 @@ public class PaperSprite extends PaperSpriteContainer {
             _parent && _parent.detachChild(this);
             _parent = parent;
             _parent && _parent.attachChild(this);
-        }
-    }
-
-    [Inline]
-    final internal function setLayer(layer:PaperSpriteLayer):void {
-        if (_layer != layer) {
-            _layer && _layer.detachSprite(this);
-            _layer = layer;
-            _layer && _layer.attachSprite(this);
         }
     }
 

@@ -37,7 +37,7 @@ public class PaperShader extends GpuAssembler implements IPaperComponent {
 
     override protected function fragment(v:GpuRegister, fc:GpuRegister, ft:GpuRegister, fs:GpuRegister, od:GpuRegister, oc:GpuRegister):void {
         tex(ft, v, fs, _smooth ? LINEAR : NEAREST);
-        mul(ft.a, ft.a, v.z);
+        //mul(ft.a, ft.a, v.z);
         mov(oc, ft);
     }
 

@@ -17,7 +17,6 @@ public class PaperSpriteTexture {
     }
 
     public function setTexture(left:Number, top:Number, right:Number, bottom:Number):void {
-
     }
 
     public function get left():Number {
@@ -37,7 +36,7 @@ public class PaperSpriteTexture {
     }
 
     public function dispose():void {
-        _layer && _layer.removeTexture(this);
+        //_layer && _layer.removeTexture(this);
     }
 }
 }

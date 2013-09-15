@@ -6,7 +6,9 @@ import flash.display.StageScaleMode;
 import flash.events.Event;
 
 import org.flashgate.display.gpu.paper.PaperView;
+import org.flashgate.display.gpu.paper.sprite.PaperSprite;
 import org.flashgate.display.gpu.paper.sprite.PaperSpriteLayer;
+import org.flashgate.display.gpu.paper.texture.PaperTextureAtlas;
 
 public class PaperExample extends Sprite {
     private var _renderer:PaperView;
@@ -16,13 +18,11 @@ public class PaperExample extends Sprite {
     public function PaperExample() {
         initStage();
 
-        //addChild(new PaperPerformanceMonitor());
-        //_bitmap = new BitmapData(8, 8, false, 0x44ff11);
-        //_bitmap.noise(0, 100, 255, 7, true);
-
         _renderer = new PaperView(stage.stage3Ds[0]);
-        //_renderer.addComponent(new PaperTextureAtlas(_bitmap));
-        //_renderer.addComponent(_layer = new PaperSpriteLayer());
+        _renderer.addComponent(new PaperTextureAtlas(new BitmapData(16, 16, false, 0x44ff11)));
+        _renderer.addComponent(_layer = new PaperSpriteLayer());
+
+        _layer.addChild(new PaperSprite());
 
         updateSize();
     }
@@ -39,7 +39,7 @@ public class PaperExample extends Sprite {
     }
 
     private function updateSize():void {
-        _renderer.setSize(stage.stageWidth, stage.stageHeight);
+        _renderer && _renderer.setSize(stage.stageWidth, stage.stageHeight);
     }
 
     private function onFrame(event:Event):void {
